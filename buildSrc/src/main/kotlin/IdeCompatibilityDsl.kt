@@ -45,7 +45,7 @@ enum class Ide(val platform: Platform) : CompatibilityPredicate {
     IJ192(Platform.P192),
     IJ193(Platform.P193),
 
-    AS35(Platform.P183),
+    AS35(Platform.P191),
     AS36(Platform.P192),
     AS40(Platform.P193);
 
