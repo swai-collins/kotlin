@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.expressions.DoubleColonExpressionResolver
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
+import org.jetbrains.kotlin.types.model.defaultType
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 class CoroutineInferenceSession(
@@ -132,7 +133,8 @@ class CoroutineInferenceSession(
     private fun integrateConstraints(
         commonSystem: NewConstraintSystemImpl,
         storage: ConstraintStorage,
-        nonFixedToVariablesSubstitutor: NewTypeSubstitutor
+        nonFixedToVariablesSubstitutor: NewTypeSubstitutor,
+        integrateFixedVariables: Boolean
     ) {
         storage.notFixedTypeVariables.values.forEach { commonSystem.registerVariable(it.typeVariable) }
 
@@ -163,6 +165,14 @@ class CoroutineInferenceSession(
                     }
             }
         }
+
+        if (integrateFixedVariables) {
+            for ((variableConstructor, type) in storage.fixedTypeVariables) {
+                val variable = storage.allTypeVariables.getValue(variableConstructor)
+                commonSystem.registerVariable(variable)
+                commonSystem.fixVariable(variable, type, null)
+            }
+        }
     }
 
     private fun buildCommonSystem(initialStorage: ConstraintStorage): NewConstraintSystemImpl {
@@ -170,13 +180,13 @@ class CoroutineInferenceSession(
 
         val nonFixedToVariablesSubstitutor = createNonFixedTypeToVariableSubstitutor()
 
-        integrateConstraints(commonSystem, initialStorage, nonFixedToVariablesSubstitutor)
+        integrateConstraints(commonSystem, initialStorage, nonFixedToVariablesSubstitutor, false)
 
         for (call in commonCalls) {
-            integrateConstraints(commonSystem, call.callResolutionResult.constraintSystem, nonFixedToVariablesSubstitutor)
+            integrateConstraints(commonSystem, call.callResolutionResult.constraintSystem, nonFixedToVariablesSubstitutor, false)
         }
         for (call in partiallyResolvedCallsInfo) {
-            integrateConstraints(commonSystem, call.callResolutionResult.constraintSystem, nonFixedToVariablesSubstitutor)
+            integrateConstraints(commonSystem, call.callResolutionResult.constraintSystem, nonFixedToVariablesSubstitutor, true)
         }
         for (diagnostic in diagnostics) {
             commonSystem.addError(diagnostic)
