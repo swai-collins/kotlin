@@ -508,7 +508,7 @@ class FirTowerResolver(
             }
         }
 
-        fun TowerScopeLevel.handleLevel(): LevelHandler {
+        fun SessionBasedTowerLevel.handleLevel(): LevelHandler {
             val candidateFactory = CandidateFactory(components, info)
             val explicitReceiverKind = explicitReceiverKind(receiverValue)
 //            val implicitExtensionInvokeMode = (this as? MemberScopeTowerLevel)?.implicitExtensionInvokeMode == true
@@ -601,8 +601,11 @@ class FirTowerResolver(
                     if (stubReceiver != null) {
                         val stubReceiverValue = qualifierOrExpressionReceiver(stubReceiver)
                         val stubProcessor = processor.replaceReceiver(stubReceiver, explicitReceiverKind(stubReceiverValue))
-                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubReceiverValue, stubProcessor)
-                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubReceiverValue, stubProcessor)
+                        val towerLevelWithStubReceiver = replaceReceiverValue(stubReceiverValue)
+                        with(towerLevelWithStubReceiver) {
+                            processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubReceiverValue, stubProcessor)
+                            processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubReceiverValue, stubProcessor)
+                        }
                         processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, weakProcessor)
                         processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, weakProcessor)
                     } else {

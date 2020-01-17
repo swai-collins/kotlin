@@ -83,6 +83,8 @@ abstract class SessionBasedTowerLevel(val session: FirSession) : TowerScopeLevel
             else -> fir.receiverTypeRef == null
         }
     }
+
+    open fun replaceReceiverValue(receiverValue: ReceiverValue) = this
 }
 
 // This is more like "dispatch receiver-based tower level"
@@ -160,6 +162,12 @@ class MemberScopeTowerLevel(
             }
         }
         return ProcessorAction.NEXT
+    }
+
+    override fun replaceReceiverValue(receiverValue: ReceiverValue): SessionBasedTowerLevel {
+        return MemberScopeTowerLevel(
+            session, bodyResolveComponents, receiverValue, implicitExtensionReceiver, implicitExtensionInvokeMode, scopeSession
+        )
     }
 }
 
