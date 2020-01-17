@@ -344,6 +344,10 @@ class GeneratePrimitives(out: PrintWriter) : BuiltInsSourceGenerator(out) {
     }
 
     private fun generateConversions(kind: PrimitiveType) {
+        fun isConversionDeprecated(otherKind: PrimitiveType): Boolean {
+            return kind in PrimitiveType.floatingPoint && otherKind.isIntegral && compareByDomainCapacity(otherKind, PrimitiveType.INT) < 0
+        }
+
         val thisName = kind.capitalized
         for (otherKind in PrimitiveType.exceptBoolean) {
             val otherName = otherKind.capitalized
@@ -367,6 +371,11 @@ class GeneratePrimitives(out: PrintWriter) : BuiltInsSourceGenerator(out) {
                 "    /**\n     * Converts this [$thisName] value to [$otherName].\n     *\n" + detail.replaceIndent("     ")
             }
             out.println(doc)
+
+            if (isConversionDeprecated(otherKind)) {
+                out.println("    @Deprecated(\"Firstly convert `$thisName` to `Int` explicitly and then to `$otherName`\", ReplaceWith(\"toInt().to$otherName()\"))")
+            }
+
             out.println("    public override fun to$otherName(): $otherName")
         }
     }
