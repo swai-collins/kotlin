@@ -428,6 +428,9 @@ class FirTowerResolver(
             )
         }
 
+        fun weaken(): TowerScopeLevelProcessor =
+            TowerScopeLevelProcessor(explicitReceiverKind, resultCollector, candidateFactory, group + 1, noStatics)
+
         override fun consumeCandidate(
             symbol: AbstractFirBasedSymbol<*>,
             dispatchReceiverValue: ReceiverValue?,
@@ -517,19 +520,12 @@ class FirTowerResolver(
                     (groupOffset + group) * groupMultiplier * 2,
                     this is MemberScopeTowerLevel && receiverValue !is QualifierReceiver
                 )
-            val processor2 =
-                TowerScopeLevelProcessor(
-                    explicitReceiverKind,
-                    resultCollector,
-                    candidateFactory,
-                    (groupOffset + group) * groupMultiplier * 2 + 1,
-                    this is MemberScopeTowerLevel && receiverValue !is QualifierReceiver
-                )
+            val weakProcessor = processor.weaken()
             when (info.callKind) {
                 CallKind.VariableAccess -> {
                     processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, processor)
                     if (this is MemberScopeTowerLevel || receiverValue == null) {
-                        processElementsByName(TowerScopeLevel.Token.Objects, info.name, receiverValue, processor2)
+                        processElementsByName(TowerScopeLevel.Token.Objects, info.name, receiverValue, weakProcessor)
                     }
                 }
                 CallKind.Function -> {
@@ -607,8 +603,8 @@ class FirTowerResolver(
                         val stubProcessor = processor.replaceReceiver(stubReceiver, explicitReceiverKind(stubReceiverValue))
                         processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubReceiverValue, stubProcessor)
                         processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubReceiverValue, stubProcessor)
-                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, processor2)
-                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, processor2)
+                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, weakProcessor)
+                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, weakProcessor)
                     } else {
                         processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, processor)
                         processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, processor)
