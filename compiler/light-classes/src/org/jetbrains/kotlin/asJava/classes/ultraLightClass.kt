@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.resolve.DelegationResolver
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
@@ -178,13 +179,18 @@ open class KtUltraLightClass(classOrObject: KtClassOrObject, internal val suppor
         val usedNames = hashSetOf<String>()
 
         this.classOrObject.companionObjects.firstOrNull()?.let { companion ->
+            val convertedVisibility = when {
+                companion.hasModifier(PROTECTED_KEYWORD) -> PsiModifier.PROTECTED
+                companion.hasModifier(PRIVATE_KEYWORD) -> PsiModifier.PRIVATE
+                else -> PsiModifier.PUBLIC
+            }
             result.add(
                 KtUltraLightFieldForSourceDeclaration(
                     companion,
                     membersBuilder.generateUniqueFieldName(companion.name.orEmpty(), usedNames),
                     this,
                     support,
-                    setOf(PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PUBLIC)
+                    setOf(PsiModifier.STATIC, PsiModifier.FINAL, convertedVisibility)
                 )
             )
 
