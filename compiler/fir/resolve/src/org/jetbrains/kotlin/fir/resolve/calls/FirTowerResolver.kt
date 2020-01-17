@@ -588,13 +588,16 @@ class FirTowerResolver(
                     }
                 }
                 CallKind.CallableReference -> {
-                    processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, processor)
-                    processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, processor)
                     val stubReceiver = info.stubReceiver
                     if (stubReceiver != null) {
                         val stubReceiverValue = qualifierOrExpressionReceiver(stubReceiver)
                         processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubReceiverValue, processor)
                         processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubReceiverValue, processor)
+                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, processor2)
+                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, processor2)
+                    } else {
+                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, processor)
+                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, processor)
                     }
                 }
                 else -> {
