@@ -58,20 +58,31 @@ class ScriptJvmCompilerFromEnvironment(val environment: KotlinCoreEnvironment) :
         val parentMessageCollector = environment.configuration[CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY]
         return withMessageCollector(script = script, parentMessageCollector = parentMessageCollector) { messageCollector ->
 
-            val initialConfiguration = scriptCompilationConfiguration.refineBeforeParsing(script).valueOr {
-                return it
-            }
+            val cache = scriptCompilationConfiguration[ScriptCompilationConfiguration.hostConfiguration]?.get(ScriptingHostConfiguration.jvm.compilationCache)
 
-            val context = createCompilationContextFromEnvironment(initialConfiguration, environment, messageCollector)
+            val cached = cache?.get(script, scriptCompilationConfiguration)
 
-            try {
-                environment.configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+            if (cached != null) cached.asSuccess(messageCollector.diagnostics)
+            else {
 
-                compileImpl(script, context, messageCollector)
+                val initialConfiguration = scriptCompilationConfiguration.refineBeforeParsing(script).valueOr {
+                    return it
+                }
 
-            } finally {
-                if (parentMessageCollector != null)
-                    environment.configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, parentMessageCollector)
+                val context = createCompilationContextFromEnvironment(initialConfiguration, environment, messageCollector)
+
+                try {
+                    environment.configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, messageCollector)
+
+                    compileImpl(script, context, messageCollector).also {
+                        if (cache != null && it is ResultWithDiagnostics.Success) {
+                            cache.store(it.value, script, scriptCompilationConfiguration)
+                        }
+                    }
+                } finally {
+                    if (parentMessageCollector != null)
+                        environment.configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, parentMessageCollector)
+                }
             }
         }
     }
@@ -117,18 +128,7 @@ private fun compileImpl(
             }
     }
 
-    val refinedConfiguration = getScriptConfiguration(mainKtFile)
-
-    val cache = refinedConfiguration[ScriptCompilationConfiguration.hostConfiguration]?.get(ScriptingHostConfiguration.jvm.compilationCache)
-
-    val cached = cache?.get(script, refinedConfiguration)
-
-    return cached?.asSuccess(messageCollector.diagnostics)
-        ?: doCompile(context, script, sourceFiles, sourceDependencies, messageCollector, getScriptConfiguration).also {
-            if (cache != null && it is ResultWithDiagnostics.Success) {
-                cache.store(it.value, script, refinedConfiguration)
-            }
-        }
+    return doCompile(context, script, sourceFiles, sourceDependencies, messageCollector, getScriptConfiguration)
 }
 
 internal fun registerPackageFragmentProvidersIfNeeded(
