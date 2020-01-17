@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 
 class CandidateFactory(
     val bodyResolveComponents: BodyResolveComponents,
-    private val callInfo: CallInfo
+    val callInfo: CallInfo
 ) {
 
     private val baseSystem: ConstraintStorage

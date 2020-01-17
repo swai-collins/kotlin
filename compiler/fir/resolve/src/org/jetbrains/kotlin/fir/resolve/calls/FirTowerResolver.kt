@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirImportImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedImportImpl
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.impl.FirQualifiedAccessExpressionImpl
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
@@ -419,6 +420,14 @@ class FirTowerResolver(
         val group: Int,
         val noStatics: Boolean
     ) : TowerScopeLevel.TowerScopeLevelProcessor<AbstractFirBasedSymbol<*>> {
+        fun replaceReceiver(explicitReceiver: FirExpression, explicitReceiverKind: ExplicitReceiverKind): TowerScopeLevelProcessor {
+            return TowerScopeLevelProcessor(
+                explicitReceiverKind, resultCollector,
+                CandidateFactory(candidateFactory.bodyResolveComponents, candidateFactory.callInfo.replaceExplicitReceiver(explicitReceiver)),
+                group, noStatics
+            )
+        }
+
         override fun consumeCandidate(
             symbol: AbstractFirBasedSymbol<*>,
             dispatchReceiverValue: ReceiverValue?,
@@ -475,9 +484,8 @@ class FirTowerResolver(
             waitGroup(group)
         }
 
-        fun TowerScopeLevel.handleLevel(): LevelHandler {
-            val candidateFactory = CandidateFactory(components, info)
-            val explicitReceiverKind = when {
+        private fun TowerScopeLevel.explicitReceiverKind(receiverValue: AbstractExplicitReceiver<*>?): ExplicitReceiverKind {
+            return when {
                 receiverValue == null -> {
                     ExplicitReceiverKind.NO_EXPLICIT_RECEIVER
                 }
@@ -495,6 +503,11 @@ class FirTowerResolver(
                     ExplicitReceiverKind.EXTENSION_RECEIVER
                 }
             }
+        }
+
+        fun TowerScopeLevel.handleLevel(): LevelHandler {
+            val candidateFactory = CandidateFactory(components, info)
+            val explicitReceiverKind = explicitReceiverKind(receiverValue)
 //            val implicitExtensionInvokeMode = (this as? MemberScopeTowerLevel)?.implicitExtensionInvokeMode == true
             val processor =
                 TowerScopeLevelProcessor(
@@ -591,8 +604,9 @@ class FirTowerResolver(
                     val stubReceiver = info.stubReceiver
                     if (stubReceiver != null) {
                         val stubReceiverValue = qualifierOrExpressionReceiver(stubReceiver)
-                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubReceiverValue, processor)
-                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubReceiverValue, processor)
+                        val stubProcessor = processor.replaceReceiver(stubReceiver, explicitReceiverKind(stubReceiverValue))
+                        processElementsByName(TowerScopeLevel.Token.Functions, info.name, stubReceiverValue, stubProcessor)
+                        processElementsByName(TowerScopeLevel.Token.Properties, info.name, stubReceiverValue, stubProcessor)
                         processElementsByName(TowerScopeLevel.Token.Functions, info.name, receiverValue, processor2)
                         processElementsByName(TowerScopeLevel.Token.Properties, info.name, receiverValue, processor2)
                     } else {
