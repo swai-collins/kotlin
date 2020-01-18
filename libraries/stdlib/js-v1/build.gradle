@@ -69,7 +69,7 @@ sourceSets {
 
     coroutinesExperimental {
         kotlin {
-            srcDir coroutinesExpJsSrcDir
+//            srcDir coroutinesExpJsSrcDir
         }
     }
 }
@@ -199,8 +199,8 @@ task compileJs(type: NoDebugJavaExec) {
     doFirst {
         args = [jsOutputFile, rootDir, "$jsSrcDir/wrapper.js"] + inputFiles.collect { it.path }.sort() +
                (compileBuiltinsKotlin2Js.outputs.files.collect { it.path }.sort() +
-                compileKotlin2Js.outputs.files.collect { it.path }.sort() +
-                compileCoroutinesExperimentalKotlin2Js.outputs.files.collect { it.path }.sort()).findAll {
+                compileKotlin2Js.outputs.files.collect { it.path }.sort() /*+
+                compileCoroutinesExperimentalKotlin2Js.outputs.files.collect { it.path }.sort()*/).findAll {
                    it.endsWith(".js") && !it.endsWith(".meta.js")
                }
     }
@@ -246,8 +246,8 @@ task compileJs(type: NoDebugJavaExec) {
 
         sourceMapFile.text = groovy.json.JsonOutput.toJson(sourceMap)
 
-        file(jsOutputMetaFile).text = file(compileKotlin2Js.outputFile.path.replaceAll('\\.js$', '.meta.js')).text +
-                                      file(compileCoroutinesExperimentalKotlin2Js.outputFile.path.replaceAll('\\.js$', '.meta.js')).text
+        file(jsOutputMetaFile).text = file(compileKotlin2Js.outputFile.path.replaceAll('\\.js$', '.meta.js')).text /*+
+                                      file(compileCoroutinesExperimentalKotlin2Js.outputFile.path.replaceAll('\\.js$', '.meta.js')).text*/
     }
 }
 

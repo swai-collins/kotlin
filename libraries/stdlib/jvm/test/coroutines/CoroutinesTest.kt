@@ -9,7 +9,7 @@ package test.coroutines
 
 import java.util.concurrent.Semaphore
 import kotlin.coroutines.*
-import kotlin.coroutines.experimental.startCoroutine
+//import kotlin.coroutines.experimental.startCoroutine
 import kotlin.test.*
 
 /**

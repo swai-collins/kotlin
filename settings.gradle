@@ -325,6 +325,7 @@ if (buildProperties.inJpsBuildIdeaSync) {
             ":kotlin-stdlib-jdk8",
             ":kotlin-stdlib:samples",
             ":kotlin-stdlib:jvm-minimal-for-test",
+            ":kotlin-coroutines-experimental-compat",
             ":tools:binary-compatibility-validator",
             ":tools:kotlin-stdlib-gen",
 
@@ -340,6 +341,7 @@ if (buildProperties.inJpsBuildIdeaSync) {
     project(':kotlin-stdlib-jdk8').projectDir = "$rootDir/libraries/stdlib/jdk8" as File
     project(':kotlin-stdlib:samples').projectDir = "$rootDir/libraries/stdlib/samples" as File
     project(":kotlin-stdlib:jvm-minimal-for-test").projectDir = "$rootDir/libraries/stdlib/jvm-minimal-for-test" as File
+    project(":kotlin-coroutines-experimental-compat").projectDir = "$rootDir/libraries/stdlib/coroutines-experimental" as File
 
     project(':tools:binary-compatibility-validator').projectDir = "$rootDir/libraries/tools/binary-compatibility-validator" as File
     project(':tools:kotlin-stdlib-gen').projectDir = "$rootDir/libraries/tools/kotlin-stdlib-gen" as File

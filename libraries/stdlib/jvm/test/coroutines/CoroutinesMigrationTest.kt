@@ -6,7 +6,7 @@
 @file:Suppress("ObsoleteExperimentalCoroutines")
 
 package test.coroutines.experimental.migration
-
+/*
 import kotlin.coroutines.experimental.buildSequence as experimentalBuildSequence
 import kotlin.coroutines.experimental.SequenceBuilder as ExperimentalSequenceBuilder
 import kotlin.coroutines.experimental.Continuation as ExperimentalContinuation
@@ -52,3 +52,4 @@ class CoroutinesMigrationTest {
     }
 }
 
+*/
