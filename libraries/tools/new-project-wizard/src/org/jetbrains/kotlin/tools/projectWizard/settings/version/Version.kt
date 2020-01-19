@@ -10,10 +10,21 @@ class Version private constructor(internal val mavenVersion: ArtifactVersion) : 
     override fun hashCode(): Int = mavenVersion.hashCode()
     override fun toString(): String = mavenVersion.toString()
 
+    val major
+        get() = mavenVersion.majorVersion
+    val minor
+        get() = mavenVersion.minorVersion
+    val incremental
+        get() = mavenVersion.incrementalVersion
+
     companion object {
         fun fromString(string: String) = Version(
             DefaultArtifactVersion(string)
         )
+
+        fun fromComponents(major: Int, minor: Int, incremental: Int) =
+            fromString("$major.$minor.$incremental")
+
 
         val parser: Parser<Version> = valueParser { value, path ->
             val (stringVersion) = value.parseAs<String>(path)

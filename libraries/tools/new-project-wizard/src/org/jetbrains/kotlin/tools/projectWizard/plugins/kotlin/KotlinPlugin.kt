@@ -3,6 +3,9 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.FileSystemWizardService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
+import org.jetbrains.kotlin.tools.projectWizard.core.service.KotlinVersionProviderService
+import org.jetbrains.kotlin.tools.projectWizard.core.service.getPreviousStable
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
@@ -18,6 +21,20 @@ import java.nio.file.Path
 class KotlinPlugin(context: Context) : Plugin(context) {
     val version by versionSetting("Kotlin Version", GenerationPhase.FIRST_STEP) {
         defaultValue = DEFAULT_VERSION
+    }
+
+    val kotlinVersions by listProperty<WizardKotlinVersion>()
+
+    val initKotlinVersions by pipelineTask(GenerationPhase.PREPARE) {
+        withAction {
+            val kotlinVersion = service<KotlinVersionProviderService>()!!.getKotlinVersion()
+            KotlinPlugin::kotlinVersions.addValues(
+                buildList {
+                    +kotlinVersion
+                    addIfNotNull(kotlinVersion.getPreviousStable())
+                }
+            )
+        }
     }
 
     val projectKind by enumSetting<ProjectKind>("Project Kind", GenerationPhase.FIRST_STEP)
